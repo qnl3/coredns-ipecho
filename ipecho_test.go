@@ -48,6 +48,25 @@ func TestServeDNS(t *testing.T) {
 		},
 	}
 
+	t.Run("A with subdomain", func(t *testing.T) {
+		d := &dummyResponseWriter{}
+		p.ServeDNS(context.Background(), d, &dns.Msg{
+			Question: []dns.Question{
+				{
+					Name:   "app.127.0.0.1.example1.com.",
+					Qclass: dns.ClassINET,
+					Qtype:  dns.TypeA,
+				},
+			},
+		})
+		require.Equal(t, 1, len(d.GetMsgs()))
+		require.Equal(t, 1, len(d.GetMsgs()[0].Answer))
+		require.Equal(t, dns.Class(dns.ClassINET), dns.Class(d.GetMsgs()[0].Answer[0].Header().Class))
+		require.Equal(t, dns.Type(dns.TypeA), dns.Type(d.GetMsgs()[0].Answer[0].Header().Rrtype))
+		require.Equal(t, "app.127.0.0.1.example1.com.", d.GetMsgs()[0].Answer[0].Header().Name)
+		require.Equal(t, net.ParseIP("127.0.0.1"), d.GetMsgs()[0].Answer[0].(*dns.A).A)
+	})
+
 	t.Run("A", func(t *testing.T) {
 		d := &dummyResponseWriter{}
 		p.ServeDNS(context.Background(), d, &dns.Msg{
@@ -67,6 +86,43 @@ func TestServeDNS(t *testing.T) {
 		require.Equal(t, net.ParseIP("127.0.0.1"), d.GetMsgs()[0].Answer[0].(*dns.A).A)
 	})
 
+	t.Run("AAAA with subdomain", func(t *testing.T) {
+		d := &dummyResponseWriter{}
+		p.ServeDNS(context.Background(), d, &dns.Msg{
+			Question: []dns.Question{
+				{
+					Name:   "app.::1.example1.com.",
+					Qclass: dns.ClassINET,
+					Qtype:  dns.TypeAAAA,
+				},
+			},
+		})
+		require.Equal(t, 1, len(d.GetMsgs()))
+		require.Equal(t, 1, len(d.GetMsgs()[0].Answer))
+		require.Equal(t, dns.Class(dns.ClassINET), dns.Class(d.GetMsgs()[0].Answer[0].Header().Class))
+		require.Equal(t, dns.Type(dns.TypeAAAA), dns.Type(d.GetMsgs()[0].Answer[0].Header().Rrtype))
+		require.Equal(t, "app.::1.example1.com.", d.GetMsgs()[0].Answer[0].Header().Name)
+		require.Equal(t, net.ParseIP("::1"), d.GetMsgs()[0].Answer[0].(*dns.AAAA).AAAA)
+	})
+
+	t.Run("AAAA", func(t *testing.T) {
+		d := &dummyResponseWriter{}
+		p.ServeDNS(context.Background(), d, &dns.Msg{
+			Question: []dns.Question{
+				{
+					Name:   "::1.example1.com.",
+					Qclass: dns.ClassINET,
+					Qtype:  dns.TypeAAAA,
+				},
+			},
+		})
+		require.Equal(t, 1, len(d.GetMsgs()))
+		require.Equal(t, 1, len(d.GetMsgs()[0].Answer))
+		require.Equal(t, dns.Class(dns.ClassINET), dns.Class(d.GetMsgs()[0].Answer[0].Header().Class))
+		require.Equal(t, dns.Type(dns.TypeAAAA), dns.Type(d.GetMsgs()[0].Answer[0].Header().Rrtype))
+		require.Equal(t, "::1.example1.com.", d.GetMsgs()[0].Answer[0].Header().Name)
+		require.Equal(t, net.ParseIP("::1"), d.GetMsgs()[0].Answer[0].(*dns.AAAA).AAAA)
+	})
 	t.Run("AAAA", func(t *testing.T) {
 		d := &dummyResponseWriter{}
 		p.ServeDNS(context.Background(), d, &dns.Msg{
